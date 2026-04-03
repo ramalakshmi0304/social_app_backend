@@ -14,9 +14,14 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
+  origin: [
+    'http://localhost:5173', // for local development
+    'https://social-app-frontend-blond.vercel.app' // your deployed frontend
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true // if you are using cookies/auth
 }));
+
 
 app.use(express.json());
 
