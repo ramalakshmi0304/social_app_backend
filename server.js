@@ -25,15 +25,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 
 // ✅ FIXED STATIC UPLOADS
-app.use(
-  '/uploads',
-  express.static(path.join(process.cwd(), 'uploads'), {
-    setHeaders: (res) => {
-      res.set("Access-Control-Allow-Origin", "*");
-      res.set("Cross-Origin-Resource-Policy", "cross-origin");
-    }
-  })
-);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
