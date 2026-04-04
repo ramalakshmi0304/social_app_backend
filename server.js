@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/auth.routes.js'
 import postRoutes from './routes/post.routes.js';
 import connectDB from './config/db.js';
+import fs from 'fs';
 
 dotenv.config();
 connectDB();
@@ -18,6 +19,10 @@ const allowedOrigins = [
   'https://social-app-frontend-blond.vercel.app'
 ];
 
+const uploadDir = './uploads';
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir);
+}
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -43,7 +48,13 @@ app.use('/uploads', express.json(), express.static(path.join(process.cwd(), 'upl
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 
-// ✅ FIXED STATIC UPLOADS
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err.stack); // This prints the REAL error to Render logs
+  res.status(500).json({
+    message: err.message || "Internal Server Error",
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

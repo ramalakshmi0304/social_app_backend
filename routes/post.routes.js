@@ -1,5 +1,5 @@
 import express from 'express';
-import upload from '../middleware/upload.js'; // Import your new middleware
+import upload from '../middleware/upload.js'; // Multer + Cloudinary
 import { protect } from '../middleware/auth.middleware.js';
 import {
   createPost,
@@ -11,15 +11,12 @@ import {
   searchPosts
 } from '../controllers/post.controller.js';
 
-
 const router = express.Router();
 
 router.get('/search', searchPosts);
-
-// Public: Anyone can view the feed
 router.get('/', getAllPosts);
 
-// Protected: Only logged-in users can create posts
+// Create post with optional image upload
 router.post('/', protect, upload.single('image'), createPost);
 
 router.patch('/:id/like', protect, likePost);

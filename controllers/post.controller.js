@@ -1,15 +1,16 @@
-
 import User from '../models/User.js';
 import Post from '../models/Post.js';
 
 
 export const createPost = async (req, res) => {
+  console.log("--- INSIDE CREATE POST CONTROLLER ---");
   try {
     const { content } = req.body;
+    const imageUrl = req.file ? req.file.path : null;
 
-    const imageUrl = req.file 
-      ? `uploads/${req.file.filename}` 
-      : null;
+    if (!content?.trim() && !imageUrl) {
+      return res.status(400).json({ message: "Post must have text or an image" });
+    }
 
     const newPost = new Post({
       content,
@@ -20,9 +21,9 @@ export const createPost = async (req, res) => {
 
     await newPost.save();
     res.status(201).json(newPost);
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("CREATE POST ERROR:", error);
+    res.status(500).json({ message: "Failed to create post" });
   }
 };
 
