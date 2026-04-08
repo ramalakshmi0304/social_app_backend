@@ -1,45 +1,43 @@
-import User from '../models/User.js';
 import Post from '../models/Post.js';
 
-
+// Create a new post (with optional image)
 export const createPost = async (req, res) => {
-  console.log("--- INSIDE CREATE POST CONTROLLER ---");
   try {
     const { content } = req.body;
-    const imageUrl = req.file ? req.file.path : null;
 
-    if (!content?.trim() && !imageUrl) {
-      return res.status(400).json({ message: "Post must have text or an image" });
-    }
+    const imageUrl = req.file
+      ? `/uploads/${req.file.filename}`
+      : null;
 
     const newPost = new Post({
       content,
       imageUrl,
       user: req.user._id,
-      username: req.user.username
+      username: req.user.username,
     });
 
     await newPost.save();
     res.status(201).json(newPost);
   } catch (error) {
-    console.error("CREATE POST ERROR:", error);
-    res.status(500).json({ message: "Failed to create post" });
+    res.status(500).json({ message: error.message });
   }
 };
 
+// Like / unlike a post
 export const likePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    // Check if user already liked
-    const index = post.likes.findIndex((like) => like.userId.toString() === req.user._id.toString());
+    const index = post.likes.findIndex(
+      (like) => like.userId.toString() === req.user._id.toString()
+    );
 
     if (index === -1) {
-      // LIKE: Add userId and username
+      // Like: add user
       post.likes.push({ userId: req.user._id, username: req.user.username });
     } else {
-      // UNLIKE: Remove from array
+      // Unlike: remove
       post.likes.splice(index, 1);
     }
 
@@ -50,65 +48,64 @@ export const likePost = async (req, res) => {
   }
 };
 
+// Add a comment to a post
 export const addComment = async (req, res) => {
   try {
     const { text } = req.body;
     const post = await Post.findById(req.params.id);
 
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
     const newComment = {
       text,
       userId: req.user._id,
-      username: req.user.username // This is 'lakshmi'
+      username: req.user.username,
     };
 
     post.comments.push(newComment);
     await post.save();
-    
+
     res.status(201).json(post);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// Get all posts (newest first)
 export const getAllPosts = async (req, res) => {
   try {
-    // .find() gets all documents
-    // .sort({ createdAt: -1 }) puts newest posts first
     const posts = await Post.find().sort({ createdAt: -1 });
-    
     res.status(200).json(posts);
   } catch (error) {
-    res.status(500).json({ 
-      message: "Failed to fetch posts", 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to fetch posts',
+      error: error.message,
     });
   }
 };
 
-// DELETE POST
+// Delete a post (owned by the user only)
 export const deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
     if (!post) {
-      return res.status(404).json({ message: "Post not found" });
+      return res.status(404).json({ message: 'Post not found' });
     }
 
-    // only owner can delete
     if (post.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
     await post.deleteOne();
 
-    res.status(200).json({ message: "Post deleted" });
-
+    res.status(200).json({ message: 'Post deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// EDIT POST
+// Update a post (edit content or imageUrl)
 export const updatePost = async (req, res) => {
   try {
     const { content, imageUrl } = req.body;
@@ -116,45 +113,47 @@ export const updatePost = async (req, res) => {
     const post = await Post.findById(req.params.id);
 
     if (!post) {
-      return res.status(404).json({ message: "Post not found" });
+      return res.status(404).json({ message: 'Post not found' });
     }
 
     if (post.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
-    post.content = content?.trim() || post.content;
-    post.imageUrl = imageUrl?.trim() || post.imageUrl;
+    post.content = (content || '').trim() || post.content;
+    post.imageUrl = (imageUrl || '').trim() || post.imageUrl;
 
     await post.save();
 
     res.status(200).json(post);
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-
+// Search posts by content or username
 export const searchPosts = async (req, res) => {
   const { q } = req.query;
 
   if (!q) {
-    return res.status(400).json({ message: "Search query is required" });
+    return res.status(400).json({ message: 'Search query is required' });
   }
 
   try {
     const posts = await Post.find({
       $or: [
         { content: { $regex: q, $options: 'i' } },
-        { username: { $regex: q, $options: 'i' } }
-      ]
+        { username: { $regex: q, $options: 'i' } },
+      ],
     })
-    .populate('user', 'username profilePic') // Ensures user details come with the post
-    .sort({ createdAt: -1 });
+      .populate('user', 'username profilePic') // attach user info
+      .sort({ createdAt: -1 });
 
     res.status(200).json(posts);
   } catch (err) {
-    res.status(500).json({ message: "Server error during search", error: err.message });
+    res.status(500).json({
+      message: 'Server error during search',
+      error: err.message,
+    });
   }
 };

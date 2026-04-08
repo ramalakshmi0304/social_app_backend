@@ -1,23 +1,25 @@
-export const protect = async (req, res, next) => {
-  let token = req.headers.authorization?.split(' ')[1];
+// middleware/authMiddleware.js
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-  if (!token) {
+export const protect = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  // Ensure header exists and starts with "Bearer "
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('AUTH FAIL: No Bearer token in Authorization header');
     return res.status(401).json({ message: 'Not authorized, no token' });
   }
 
-try {
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const token = authHeader.split(' ')[1];
+
+  try {
+  // Replace process.env.JWT_SECRET with the ACTUAL string for one test
+  const decoded = jwt.verify(token, "a-string-secret-at-least-256-bits-long"); 
   req.user = await User.findById(decoded.id).select('-password');
-
-  if (!req.user) {
-    console.log("AUTH FAIL: User not found in DB");
-    return res.status(401).json({ message: "User no longer exists" });
-  }
-
-  console.log("AUTH SUCCESS: Proceeding to next middleware/controller");
-  next(); 
+  next();
 } catch (error) {
-  console.log("AUTH FAIL: JWT Verification failed");
-  res.status(401).json({ message: "Not authorized" });
+  console.log('JWT Error:', error.message);
+  res.status(401).json({ message: 'Not authorized' });
 }
 };

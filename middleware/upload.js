@@ -1,22 +1,25 @@
-import multer from "multer";
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import dotenv from "dotenv"; // 👈 Add this
+// middleware/cloudinaryUpload.js
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import dotenv from 'dotenv';
 
-dotenv.config(); // 👈 Add this
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "social_posts",
-    allowed_formats: ["jpg", "png", "jpeg", "webp"]
-  }
+    folder: 'social_posts',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    // Optional: add transformations if you want
+    // transformation: [{ width: 1200, height: 800, crop: 'limit' }],
+  },
 });
 
 export default multer({ storage });

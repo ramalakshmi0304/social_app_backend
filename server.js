@@ -55,6 +55,6 @@ app.use((err, req, res, next) => {
     error: process.env.NODE_ENV === 'development' ? err : {}
   });
 });
-
-const PORT = process.env.PORT || 5000;
+console.log("DEBUG: Current JWT Secret is:", process.env.JWT_SECRET ? "LOADED" : "MISSING");
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
